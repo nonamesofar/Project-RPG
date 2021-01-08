@@ -1,11 +1,12 @@
-﻿using System;
+﻿using RPG.Saving;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace RPG.Character
 {
-    public class CharacterCreator : MonoBehaviour
+    public class CharacterCreator : MonoBehaviour, ISaveable
     {
         [Header("Material")]
         public Material mat;
@@ -53,9 +54,21 @@ namespace RPG.Character
         //dictionary to keep all posible items for fast reference
         private List<GameObject>[,] allObjects;
 
+        private bool isLoaded = false;
+
         #region Init and Helpers
         // Start is called before the first frame update
         void Start()
+        {
+            if (false == isLoaded)
+            {
+                InitBody();
+            }
+
+            EnableCharacter();
+        }
+
+        private void InitBody()
         {
             //set up the vectors
             maxParts = Enum.GetValues(typeof(BodyParts)).Length;
@@ -66,13 +79,11 @@ namespace RPG.Character
 
             // rebuild all lists
             BuildLists();
-
             //set to -1 which means nothing equipped
             for (int i = 0; i < maxParts; i++)
             {
                 equipped[i] = -1;
             }
-
             //default startup as male
             equipped[(int)BodyParts.HeadAllElements] = 0;
             equipped[(int)BodyParts.Eyebrow] = 0;
@@ -87,7 +98,9 @@ namespace RPG.Character
             equipped[(int)BodyParts.Leg_Right] = 0;
             equipped[(int)BodyParts.Leg_Left] = 0;
 
-            EnableCharacter();
+            SetRace("Race 1", Color.white);
+            SetHairColor("dummy", new Color(0.3098039f, 0.254902f, 0.1764706f));
+
         }
 
         private void EnableCharacter()
@@ -199,6 +212,9 @@ namespace RPG.Character
             Color skinColor = Color.black;
             Color scarColor = Color.black;
             Color stubbleColor = Color.black;
+            
+            ActivateItem((int)BodyParts.Elf_Ear, -1);
+            equipped[(int)BodyParts.Elf_Ear] = -1;
             switch (name)
             {
                 case "Race 1": //Human
@@ -220,6 +236,8 @@ namespace RPG.Character
                     skinColor = elfSkin;
                     scarColor = elfScar;
                     stubbleColor = elfStubble;
+                    equipped[(int)BodyParts.Elf_Ear] = 1;
+                    ActivateItem((int)BodyParts.Elf_Ear, 1);
                     //activate elf ears
                     break;
 
@@ -259,8 +277,6 @@ namespace RPG.Character
             }
         }
         #endregion
-
-
 
         #region Builders
         // build all item lists for use in randomization
@@ -430,6 +446,53 @@ namespace RPG.Character
                     }
                 }
             }
+        }
+        #endregion
+
+        #region Save and Load
+        //this save your data
+        public object CaptureState()
+        {
+            Dictionary<string, object> data = new Dictionary<string, object>();
+
+            data["gender"] = gender;
+            data["head"] = equipped[(int)BodyParts.HeadAllElements];
+            data["eyebrows"] = equipped[(int)BodyParts.Eyebrow];
+            data["hair"] = equipped[(int)BodyParts.All_Hair];
+            data["facialhair"] = equipped[(int)BodyParts.FacialHair];
+            return data;
+        }
+
+        public void RestoreState(object state)
+        {
+
+            isLoaded = true;
+
+            Dictionary<string, object> data = (Dictionary<string, object>)state;
+            int gd = (int)data["gender"];
+
+            InitBody();
+
+            EnableCharacter();
+
+            //this part is stupid but lazy developers
+            if ((Gender)gd == Gender.Male)
+            {
+                SetGender("Gender (Male)", Color.black);
+            }
+            else
+            {
+                SetGender("Gender (Female)", Color.black);
+            }
+
+            int index = (int)data["head"];
+            ActivateItem((int)BodyParts.HeadAllElements, index);
+            index = (int)data["eyebrows"];
+            ActivateItem((int)BodyParts.Eyebrow, index);
+            index = (int)data["hair"];
+            ActivateItem((int)BodyParts.All_Hair, index);
+            index = (int)data["facialhair"];
+            ActivateItem((int)BodyParts.FacialHair, index);
         }
         #endregion
     }

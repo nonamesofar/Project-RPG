@@ -1,5 +1,13 @@
 ﻿namespace RPG.Core
 {
+    public enum ButtonStatus
+    {
+        NONE,
+        ButtonDown,
+        ButtonUp,
+        ButtonHold
+    }
+
     struct Constants
     {
         //Inputs strings

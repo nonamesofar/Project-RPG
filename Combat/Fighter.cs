@@ -1,6 +1,5 @@
 ﻿using RPG.Core;
-using System.Collections;
-using System.Collections.Generic;
+using RPG.Movement;
 using UnityEngine;
 
 namespace RPG.Combat
@@ -14,11 +13,13 @@ namespace RPG.Combat
         [SerializeField] Transform leftHand;
 
         private AnimationHandler animationHandler;
+        private PlayerMovement controller;
 
         // Start is called before the first frame update
         void Start()
         {
             animationHandler = GetComponent<AnimationHandler>();
+            controller = GetComponent<PlayerMovement>();
             if(rightHandWeapon != null)
             {
                 rightHandWeapon.Spawn(rightHand, GetComponent<Animator>(), Constants.WEAPON_RIGHT_HAND);
@@ -30,14 +31,34 @@ namespace RPG.Combat
 
         }
 
-        public void AttackBehaviour()
+        public ILockable FindLocakbleTarget()
         {
+            Collider[] cols = Physics.OverlapSphere(transform.position, 20);
+            for (int i = 0; i < cols.Length; i++)
+            {
+                ILockable lockable = cols[i].GetComponent<ILockable>();
+                if (lockable != null)
+                {
+                    return lockable;
+                }
+            }
+
+            return null;
+        }
+
+        public bool AttackBehaviour(ButtonStatus rb, ButtonStatus lb, ButtonStatus rt, ButtonStatus lt)
+        {
+            if (animationHandler.IsInAction())
+            {
+                return true;
+            }
             if (rightHandWeapon != null)
             {
-                if (Input.GetMouseButtonDown(0))
+                if (rb == ButtonStatus.ButtonDown)
                 {
                     animationHandler.SetBool(Constants.ANIMATION_INACTION, true);
                     animationHandler.PlayAnimation(rightHandWeapon.Attack_R1);
+                    return true;
                 }
             }
 
@@ -45,31 +66,37 @@ namespace RPG.Combat
             {
                 if (leftHandWeapon.IsShield)
                 {
-                    if (Input.GetMouseButtonDown(1))
+                    if (lb == ButtonStatus.ButtonDown)
                     {
                         animationHandler.SetBool(Constants.ANIMATION_BLOCK, true);
                     }
-                    if (Input.GetMouseButtonUp(1))
+                    if (lb == ButtonStatus.ButtonUp)
                     {
                         animationHandler.SetBool(Constants.ANIMATION_BLOCK, false);
                     }
                 }
                 else
                 {
-                    if (Input.GetMouseButtonDown(1))
+                    if (lb == ButtonStatus.ButtonDown)
                     {
                         animationHandler.SetBool(Constants.ANIMATION_INACTION, true);
                         animationHandler.PlayAnimation(leftHandWeapon.Attack_L1);
                     }
-
+                    return true;
                 }
+                
             }
+            return false;
         }
 
         //Animation Events
         void Hit()
         {
-            print("Hit");
+            
+            if(rightHandWeapon.Collider.Target != null)
+            {
+                print("Hit");
+            }
         }
     }
 }

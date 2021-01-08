@@ -17,13 +17,15 @@ namespace RPG.Combat
         [SerializeField] bool isShield = false;
 
         const string weaponName = "Weapon";
+        WeaponCollider collider = null;
 
         public float WeaponDamage { get => weaponDamage; set => weaponDamage = value; }
         public float WeaponRange { get => weaponRange; set => weaponRange = value; }
         public AnimationClip Attack_R1 { get => attack_R1; set => attack_R1 = value; }
         public AnimationClip Attack_L1 { get => attack_L1; set => attack_L1 = value; }
         public bool IsShield { get => isShield; set => isShield = value; }
-        
+        public WeaponCollider Collider { get => collider; set => collider = value; }
+
         public void Spawn(Transform transformHand, Animator animator, int hand)
         {
             if(hand < weaponPrefabs.Length)
@@ -34,6 +36,7 @@ namespace RPG.Combat
                     DestroyOldWeapon(transformHand);
                     GameObject weapon = Instantiate(weaponPrefab, transformHand);
                     weapon.name = weaponName;
+                    Collider = weaponPrefab.GetComponent<WeaponCollider>();
                 }
             }
 
